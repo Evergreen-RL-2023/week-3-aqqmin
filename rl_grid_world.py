@@ -41,13 +41,14 @@ class Agent():
         act_index = rnd.randrange(0, 4)
         action = self.actions[act_index]
         best_value = max(self.gridcell.vals, key=self.gridcell.vals.get)
-        if (rnd.randrange(0,1)>.25):
+        #lets explore about .25 of the time!
+        if (rnd.random()>.25):
             action = best_value
         self.rewards += self.traverse(action)
 
 
     def traverse(self, action):
-        print(f"traversing {action} !")
+        #print(f"traversing {action} !")
         reward = self.gridcell.get_reward(action)
         self.gridcell.vals[action] = (self.gridcell.vals[action] + reward[0])/2
         self.gridcell = reward[1]
@@ -66,6 +67,7 @@ class GridWorld():
                 self.grid[i].append(GridCell(i,k,self))
         self.agent = Agent(agentR,agentC,self)
         self.agent.status()
+
 
 class GridCell():
     def __init__(self, r, c, gridworld):
@@ -122,23 +124,16 @@ class GridCell():
 '''
 
 if __name__ == '__main__':
-    rnd.seed(42)
     
     world = GridWorld(N,N//2,N//2)
     s = 0
     while(s<10000):
         world.agent.step()
         s+=1
+
     for i in range (world.size):
         print(f"\n printing row {i}'s visits and values: ")
         for j in range (world.size):
             print(f"cell {i},{j} visited {world.grid[i][j].visits} times \n agent knows :{world.grid[i][j].vals}")
     
-    '''grid = []
-    gcell = GridCell(1,1)
-    gcell.get_next_cell('n')
-    for i in range(N):
-        grid.append([])
-        for j in range(N):
-            grid[i].append(GridCell(i,j))
-            print(grid[i][j], end=' ')'''
+
