@@ -24,40 +24,56 @@ import numpy as np
 import random as rnd
 
 N = 5   #grid size
+D = .95 #discount
 
 class Agent():
     def __init__(self,r,c,gridworld):
-        self.row = r
-        self.col = c
+        self.gridworld = gridworld
         self.gridcell = gridworld.grid[r][c]
-        self.rewards = 0
+        self.rewards = 1
         self.actions = ['n','e','s','w']
+        self.steps_since_reward = []
 
     def status(self):
-        print(f'I am at {self.row}, {self.col}')
-        return self.row, self.col
+        print(f'I am at {self.gridcell.row}, {self.gridcell.col}')
 
     def step(self):
         act_index = rnd.randrange(0, 4)
         action = self.actions[act_index]
         best_value = max(self.gridcell.vals, key=self.gridcell.vals.get)
         #lets explore about .25 of the time!
-        if (rnd.random()>.25):
+        if (rnd.random()>self.gridworld.E):
             action = best_value
         self.rewards += self.traverse(action)
 
 
     def traverse(self, action):
-        #print(f"traversing {action} !")
-        reward = self.gridcell.get_reward(action)
-        self.gridcell.vals[action] = (self.gridcell.vals[action] + reward[0])/2
-        self.gridcell = reward[1]
-        self.gridcell.visits += 1
-        return reward[0]
+        print(f"traversing {action} !")
+        self.steps_since_reward.append((self.gridcell,action))
+        outcome = self.gridcell.get_outcome(action)        
+        if outcome[0] != 0:
+            for i in range((len(self.steps_since_reward)-1),-1,-1):
+                step = self.steps_since_reward[i]
+                action_taken = step[1]
+                step_discount = (D**(len(self.steps_since_reward)-i-1))
+
+                new_val = (step[0].vals[action_taken] + outcome[0] * step_discount)/2
+                step[0].vals[action_taken] = new_val
+                
+                new_val_opt = (step[0].vals_opt[action_taken] + outcome[0] * step_discount)/2
+                step[0].vals_opt[action_taken] = new_val_opt
+                step[0].visits+=1
+                   
+            self.steps_since_reward = []
+
+        #self.gridcell.vals[action] = (self.gridcell.vals[action] + outcome[0])/2
+        self.gridcell = outcome[1]
+        return outcome[0]
         
 
 class GridWorld():
     def __init__(self, size, agentR, agentC):
+        self.E = .25
         self.grid = []
         self.size = size
         for i in range(size):
@@ -76,6 +92,7 @@ class GridCell():
         self.row = r
         self.col = c
         self.vals = {'n':1,'e':1,'s':1,'w':1}
+        self.vals_opt = {'n':1,'e':1,'s':1,'w':1}
         self.reward = 0
         self.type = 0
         self.visits = 0
@@ -92,9 +109,9 @@ class GridCell():
         elif self.type == 2:
             self.reward = 5
 
-    def get_reward(self, action):
+    def get_outcome(self, action):
         if ((self.row == 0 and action == 'n') or (self.col == 0 and action == 'w') or (self.row == (self.gridworld.size - 1) and action == 's') or (self.col == (self.gridworld.size - 1) and action == 'e')):
-            reward = -2
+            outcome = -1
             next_cell = self
 
         else:
@@ -112,9 +129,9 @@ class GridCell():
                         next_cell = self.gridworld.grid[self.row+1][self.col]
                     case 'w':
                         next_cell = self.gridworld.grid[self.row][self.col-1]
-            reward = next_cell.reward
+            outcome = next_cell.reward
             #get reward uppn entering cell, this will allow to map action values for each action from each cell
-        return reward, next_cell    
+        return outcome, next_cell    
 
 ''' 
     def step():
@@ -124,10 +141,10 @@ class GridCell():
 '''
 
 if __name__ == '__main__':
-    
+    rnd.seed(42)
     world = GridWorld(N,N//2,N//2)
     s = 0
-    while(s<10000):
+    while(s<1000):
         world.agent.step()
         s+=1
 
@@ -135,5 +152,13 @@ if __name__ == '__main__':
         print(f"\n printing row {i}'s visits and values: ")
         for j in range (world.size):
             print(f"cell {i},{j} visited {world.grid[i][j].visits} times \n agent knows :{world.grid[i][j].vals}")
+
     
+    for i in range (world.size):
+        print(f"\n printing row {i}'s optimal ")
+        for j in range (world.size):
+            if world.grid[i][j].type != 0:
+                print(f"cell {i},{j} is a warp cell")
+            else:
+                print(f"cell {i},{j} \n  optimal :{max(world.grid[i][j].vals, key=world.grid[i][j].vals.get)}")
 
