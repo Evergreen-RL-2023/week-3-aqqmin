@@ -2,7 +2,7 @@ import random as rnd
 
 S = 5 #Size of gridworld
 E = 1 #Epsilon
-
+G = .9 #gamma, discount rate
 
 
 class GridWorld():
@@ -46,7 +46,7 @@ class GridCell():
         else:
             if self.type == 1: 
                 next_cell = self.gridworld.grid[4][1]
-            if self.type == 2:
+            elif self.type == 2:
                 next_cell = self.gridworld.grid[2][3]
 
             else:
@@ -59,7 +59,7 @@ class GridCell():
                         next_cell = self.gridworld.grid[self.row+1][self.col]
                     case 'w':
                         next_cell = self.gridworld.grid[self.row][self.col-1]
-            reward = self.reward
+            reward = next_cell.reward
         return reward, next_cell  
 
 class Agent():
@@ -70,8 +70,7 @@ class Agent():
         self.actions = ['n','e','s','w']
 
     def step(self):
-        act_index = rnd.randrange(0, 4)
-        action = self.actions[act_index]
+        action = rnd.choice(self.actions)
         #best_value = max(self.gridcell.vals, key=self.gridcell.vals.get)
 
         #if (rnd.random() > E):
@@ -81,17 +80,19 @@ class Agent():
 
     def traverse(self,action):
         outcome = self.gridcell.get_outcome(action)
-        self.gridcell.value = outcome[0] + (.9*(outcome[1].get_outcome('n')[0] + outcome[1].get_outcome('e')[0] + outcome[1].get_outcome('s')[0] + outcome[1].get_outcome('w')[0])/4)
-        self.gridcell.visits+=1
         self.gridcell = outcome[1]
-        print(action)
+        self.gridcell.value = outcome[0] + G* (.25 * self.gridcell.get_outcome('n')[1].value + .25 * self.gridcell.get_outcome('e')[1].value + .25 * self.gridcell.get_outcome('s')[1].value + .25 * self.gridcell.get_outcome('w')[1].value)
+        self.gridcell.visits+=1
+        #print(action)
 
 
 def main():
     rnd.seed(42)
     gridworld = GridWorld(S,2,2)
+    
     for i in range(10000):
         gridworld.agent.step()
+
     for i in range(S):
         for j in range(S):
             print(f"cell {i} , {j} has value {gridworld.grid[i][j].value} and {gridworld.grid[i][j].visits} visits")
