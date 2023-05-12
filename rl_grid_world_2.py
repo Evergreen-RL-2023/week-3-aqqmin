@@ -39,17 +39,21 @@ class GridCell():
             self.reward = 5
 
     def get_outcome(self, action):
+        reward = 0
+        #handle boarder movement and reward
         if ((self.row == 0 and action == 'n') or (self.col == 0 and action == 'w') or (self.row == (self.gridworld.size - 1) and action == 's') or (self.col == (self.gridworld.size - 1) and action == 'e')):
             reward = -1
             next_cell = self
             #print("ouch")
 
         else:
+            #handle special movement cases
             if self.type == 1: 
                 next_cell = self.gridworld.grid[4][1]
+
             elif self.type == 2:
                 next_cell = self.gridworld.grid[2][3]
-
+            #otherwise move one space
             else:
                 match action:
                     case 'n':
@@ -60,7 +64,10 @@ class GridCell():
                         next_cell = self.gridworld.grid[self.row+1][self.col]
                     case 'w':
                         next_cell = self.gridworld.grid[self.row][self.col-1]
-            reward = next_cell.reward
+            #reward is from cell we are moving out of
+            reward = self.reward
+
+        #outcome is a tuple, (reward, next_cell)
         return reward, next_cell  
 
 class Agent():
@@ -91,9 +98,12 @@ class Agent():
         self.traverse(action)
 
     def traverse(self,action):
+        #get the new cell that will be moved to, and the reward, in a tuple
         outcome = self.gridcell.get_outcome(action)
-        self.gridcell = outcome[1]        
+        #compute the value for the cell based on the reward for leaving it, and the average of the values of ceslls you will enter for all possible actions
         self.gridcell.value =  outcome[0] + G* (.25 * outcome[1].get_outcome('n')[1].value + .25 * outcome[1].get_outcome('e')[1].value + .25 * outcome[1].get_outcome('s')[1].value + .25 * outcome[1].get_outcome('w')[1].value)
+        #move to the new cell
+        self.gridcell = outcome[1] 
         self.gridcell.visits+=1
         #print(action)
 
@@ -110,7 +120,7 @@ def main():
     print(gridworld.grid[4][0].get_outcome('s'))
     print(gridworld.grid[0][4].get_outcome('e'))
 
-    for i in range(10000):
+    for i in range(50000):
         gridworld.agent.step()
 
     for i in range(S):
