@@ -42,6 +42,7 @@ class GridCell():
         if ((self.row == 0 and action == 'n') or (self.col == 0 and action == 'w') or (self.row == (self.gridworld.size - 1) and action == 's') or (self.col == (self.gridworld.size - 1) and action == 'e')):
             reward = -1
             next_cell = self
+            #print("ouch")
 
         else:
             if self.type == 1: 
@@ -71,25 +72,44 @@ class Agent():
 
     def step(self):
         action = rnd.choice(self.actions)
-        #best_value = max(self.gridcell.vals, key=self.gridcell.vals.get)
+        
+        '''
+        choice_vals = {}
+        for choice in self.actions:
+            choice_vals[choice] = self.gridcell.get_outcome(choice)[1].value
+        running_val = min(list(choice_vals.values()))
+        choice_key = 's'
+        for key in list(choice_vals.keys()):
+            running_key = key
+            if choice_vals[running_key] > running_val:
+                 choice_key = running_key
 
-        #if (rnd.random() > E):
-            #action = best_value
+        if (rnd.random() > E):
+            action = choice_key
+        '''
 
         self.traverse(action)
 
     def traverse(self,action):
         outcome = self.gridcell.get_outcome(action)
-        self.gridcell = outcome[1]
-        self.gridcell.value = outcome[0] + G* (.25 * self.gridcell.get_outcome('n')[1].value + .25 * self.gridcell.get_outcome('e')[1].value + .25 * self.gridcell.get_outcome('s')[1].value + .25 * self.gridcell.get_outcome('w')[1].value)
+        self.gridcell = outcome[1]        
+        self.gridcell.value =  outcome[0] + G* (.25 * outcome[1].get_outcome('n')[1].value + .25 * outcome[1].get_outcome('e')[1].value + .25 * outcome[1].get_outcome('s')[1].value + .25 * outcome[1].get_outcome('w')[1].value)
         self.gridcell.visits+=1
         #print(action)
 
+class Test():
+    def __init__(self):
+        print("made a test!!")
 
 def main():
+
     rnd.seed(42)
     gridworld = GridWorld(S,2,2)
     
+    print(gridworld.grid[4][0])
+    print(gridworld.grid[4][0].get_outcome('s'))
+    print(gridworld.grid[0][4].get_outcome('e'))
+
     for i in range(10000):
         gridworld.agent.step()
 
