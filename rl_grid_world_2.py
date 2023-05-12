@@ -22,6 +22,7 @@ class GridCell():
         self.gridworld = gridworld
         self.row = r
         self.col = c
+        
         self.action_vals = {'n':0,'e':0,'s':0,'w':0}
         self.reward = 0
         self.type = 0
@@ -35,6 +36,7 @@ class GridCell():
 
         if self.type == 1:
             self.reward = 10
+            
         elif self.type == 2:
             self.reward = 5
 
@@ -107,6 +109,16 @@ class Agent():
         self.gridcell.visits+=1
         #print(action)
 
+    def sweep(self):
+        for row in self.gridworld.grid:
+            for gridcell in row:
+                rewards = []
+                for action in self.actions:
+                    next = gridcell.get_outcome(action)
+                    rewards.append(next[0]+G*next[1].value)
+                gridcell.value =  max(rewards)    
+                
+
 class Test():
     def __init__(self):
         print("made a test!!")
@@ -120,11 +132,13 @@ def main():
     print(gridworld.grid[4][0].get_outcome('s'))
     print(gridworld.grid[0][4].get_outcome('e'))
 
-    for i in range(50000):
-        gridworld.agent.step()
+    for i in range(10000):
+        gridworld.agent.sweep()
 
     for i in range(S):
         for j in range(S):
             print(f"cell {i} , {j} has value {gridworld.grid[i][j].value} and {gridworld.grid[i][j].visits} visits")
+
+
 if __name__ == '__main__':
     main()
